@@ -23,10 +23,11 @@
  */
 
 #include "./BSP/LED/led.h"
+#include "stm32f1xx_hal_tim.h"
 #include "./BSP/TIMER/btim.h"
 
 
-extern TIM_HandleTypeDef g_timx_handle;  /* 定时器句柄 */
+TIM_HandleTypeDef g_timx_handle = {0};  /* 定时器句柄 */
 
 /**
  * @brief       基本定时器TIMX定时中断初始化函数
@@ -46,8 +47,9 @@ void btim_timx_int_init(uint16_t arr, uint16_t psc)
     g_timx_handle.Init.Prescaler = psc;                          /* 设置预分频系数 */
     g_timx_handle.Init.CounterMode = TIM_COUNTERMODE_UP;         /* 递增计数模式 */
     g_timx_handle.Init.Period = arr;                             /* 自动装载值 */
+    g_timx_handle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    g_timx_handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     HAL_TIM_Base_Init(&g_timx_handle);
-
     HAL_TIM_Base_Start_IT(&g_timx_handle);    /* 使能定时器x及其更新中断 */
 }
 
@@ -63,7 +65,9 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
     {
         BTIM_TIMX_INT_CLK_ENABLE();                     /* 使能TIM时钟 */
         HAL_NVIC_SetPriority(BTIM_TIMX_INT_IRQn, 1, 3); /* 抢占1，子优先级3，组2 */
+    
         HAL_NVIC_EnableIRQ(BTIM_TIMX_INT_IRQn);         /* 开启ITM3中断 */
+        
     }
 }
 
@@ -86,10 +90,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == BTIM_TIMX_INT)
     {
-        LED1_TOGGLE(); /* LED1反转 */
+        LED0_TOGGLE();
     }
 }
 
+void btim_timx_int_stop()
+{
+    HAL_TIM_Base_Start_IT(&g_timx_handle);
+}
 
+void btim_timx_int_start()
+{
+    HAL_TIM_Base_Stop_IT(&g_timx_handle);
+}
 
 
