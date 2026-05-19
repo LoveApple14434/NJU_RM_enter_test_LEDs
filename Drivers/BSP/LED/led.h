@@ -30,9 +30,9 @@
 /******************************************************************************************/
 /* 引脚 定义 */
 
-#define LED0_GPIO_PORT                  GPIOA
-#define LED0_GPIO_PIN                   GPIO_PIN_8
-#define LED0_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOA_CLK_ENABLE(); }while(0)             /* PA口时钟使能 */
+#define LED0_GPIO_PORT                  GPIOC
+#define LED0_GPIO_PIN                   GPIO_PIN_13
+#define LED0_GPIO_CLK_ENABLE()          do{ __HAL_RCC_GPIOC_CLK_ENABLE(); }while(0)             /* PA口时钟使能 */
 
 #define LED1_GPIO_PORT                  GPIOD
 #define LED1_GPIO_PIN                   GPIO_PIN_2

@@ -23,7 +23,12 @@ add_executable(${PROJECT_NAME}
     ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc_ex.c
     ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_uart.c
     ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_usart.c
+    ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c
+    ../../Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.c
     ../../Drivers/BSP/LED/led.c
+    ../../Drivers/BSP/TIMER/btim.c
+    ../../Drivers/BSP/TIMER/gtim.c
+    ../../Drivers/BSP/KEY/key.c
 )
 
 # 添加自定义目标用于生成二进制文件 (使用 POST_BUILD)
