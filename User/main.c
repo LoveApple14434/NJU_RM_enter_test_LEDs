@@ -19,7 +19,7 @@
  */
 
 
-// #include "stm32f1xx_hal_tim.h"
+
 #include "stm32f1xx_it.h"
 #include "./SYSTEM/sys/sys.h"
 #include "./SYSTEM/delay/delay.h"
@@ -27,7 +27,9 @@
 #include "./BSP/LED/led.h"
 #include "./BSP/KEY/key.h"
 #include "./BSP/TIMER/btim.h"
+#include <stdint.h>
 
+uint8_t state = 0;
 
 int main(void)
 {
@@ -36,23 +38,32 @@ int main(void)
     delay_init(72);                             /* 初始化延时函数 */
     led_init();                                 /* 配置STM32操作LED相关的寄存器 */
     key_init();
-    // usart_init(115200);
+    usart_init(115200);
     btim_timx_int_init(18000-1, 4000-1);
+    btim_timx_int_stop();
 
+    btim_timx_int2_init(72-1, 0xfff);
+    // LED0_brightness_control(0);
+    
+    uint8_t brightness_level = 0;
 
     while(1)
     {
-        // LED0(0);                                /* LED0 亮 */
-        // // LED1(1);                                /* LED1 灭 */
-        // delay_ms(500);
-        // LED0(1);                                /* LED0 灭 */
-        // // LED1(0);                                /* LED1 亮 */
-        // delay_ms(500);
-        // LED0(0);
         uint8_t keyval = key_scan(1);
-        // HAL_UART_Transmit(&g_uart1_handle, &keyval, 1, 1000);
-        if(keyval==KEY1_PRES) LED0_TOGGLE();
-        // delay_ms(500);
+        HAL_UART_Transmit(&g_uart1_handle, &keyval, 1, 1000);
+        if(keyval==KEY1_PRES) {
+            // state=1;
+            // btim_timx_int_start();
+            // while (state) {
+            //     keyval=key_scan(1);
+            //     if (!keyval) {
+            //         brightness_level=(brightness_level+1)%4;
+            //         LED0_brightness_control(brightness_level*10000);
+            //     }
+            // }
+            LED0(0);
+        }
+        // HAL_UART_Transmit(&g_uart1_handle, &keyval, 1, 100);
     }
 }
 

@@ -41,6 +41,8 @@
 TIM_HandleTypeDef        TimHandle;
 /* Private function prototypes -----------------------------------------------*/
 void TIM2_IRQHandler(void);
+/* User TIM2 handle (from BSP) */
+extern TIM_HandleTypeDef timx_handle2;
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -166,6 +168,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void TIM2_IRQHandler(void)
 {
   HAL_TIM_IRQHandler(&TimHandle);
+}
+
+/* If user code uses TIM3 for additional handlers, dispatch here */
+void TIM3_IRQHandler(void)
+{
+  /* Dispatch HAL tick (if TIM3 used for other purposes, TimHandle won't match) */
+  HAL_TIM_IRQHandler(&timx_handle2);
 }
 
 /**

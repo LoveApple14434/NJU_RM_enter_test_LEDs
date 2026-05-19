@@ -26,6 +26,7 @@
 #define __BTIM_H
 
 #include "./SYSTEM/sys/sys.h"
+#include <stdint.h>
 
 /******************************************************************************************/
 /* 基本定时器 定义 */
@@ -44,6 +45,8 @@
 void btim_timx_int_init(uint16_t arr, uint16_t psc);    /* 基本定时器 定时中断初始化函数 */
 void btim_timx_int_stop(void);
 void btim_timx_int_start(void);
+void btim_timx_int2_init(uint16_t arr, uint16_t psc);   // 用作类PWM
+uint8_t LED0_brightness_control(uint16_t brightness);
 
 #endif
 
