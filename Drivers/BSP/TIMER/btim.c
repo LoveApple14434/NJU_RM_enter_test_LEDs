@@ -31,6 +31,9 @@
 #include "stm32f1xx_hal_tim.h"
 #include <stdint.h>
 #include "./BSP/TIMER/btim.h"
+#include "BSP/KEY/key.h"
+#include "./SYSTEM/usart/usart.h"
+#include "stm32f1xx_hal_uart.h"
 
 
 TIM_HandleTypeDef g_timx_handle = {0};  /* 定时器句柄 */
@@ -81,6 +84,10 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
         __HAL_RCC_TIM3_CLK_ENABLE();
         HAL_NVIC_SetPriority(TIM3_IRQn, 2, 4);
         HAL_NVIC_EnableIRQ(TIM3_IRQn);
+    } else if (htim->Instance==TIM2) {
+        __HAL_RCC_TIM2_CLK_ENABLE();
+        HAL_NVIC_SetPriority(TIM2_IRQn, 2, 4);
+        HAL_NVIC_EnableIRQ(TIM2_IRQn);
     }
 }
 
@@ -101,9 +108,8 @@ void TIM3_IRQHandler(void)
 
 void TIM2_IRQHandler(void)
 {
-    if (tim2_cnt<0xffffffff) {
-        ++tim2_cnt;
-    }
+    HAL_TIM_IRQHandler(&timx_handle3); /* 定时器中断公共处理函数 */
+    
 }
 
 /**
@@ -123,6 +129,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             LED0(0);
         } else {
             LED0(1);
+        }
+    } else if (htim->Instance == TIM2) {
+        if (tim2_cnt<0xffffffff) {
+            ++tim2_cnt;
         }
     }
 }
@@ -187,8 +197,10 @@ uint32_t key_press_time_cnt(uint8_t (*key_pres_func)(void), uint8_t press_ret)
     HAL_TIM_Base_Start_IT(&timx_handle3);    /* 使用中断方式启动 TIM2 */
     while (1) {
         uint8_t retval = key_pres_func();
+        HAL_UART_Transmit(&g_uart1_handle, &retval, 1, 100);
         if (retval!=press_ret) {
             uint32_t ret = tim2_cnt;
+            HAL_UART_Transmit(&g_uart1_handle, (uint8_t*)&ret, 4, 1000);
             HAL_TIM_Base_Stop_IT(&timx_handle3);
             tim2_cnt=0;
             return ret;

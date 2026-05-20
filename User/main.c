@@ -28,7 +28,6 @@
 #include "./BSP/LED/led.h"
 #include "./BSP/KEY/key.h"
 #include "./BSP/TIMER/btim.h"
-#include <stdint.h>
 
 uint8_t state = 0;
 
@@ -49,6 +48,8 @@ int main(void)
 
     btim_timx_int2_init(72-1, 10);
     LED0_brightness_control(0);
+
+    tim3_init();
     
     uint8_t brightness_level = 0;
     while(1)
@@ -58,7 +59,7 @@ int main(void)
         if (keyval==KEY1_PRES) {
             state=1;
             tim1_1s_start();
-            uint8_t state_mem = 0;
+            uint8_t state_mem = 1;
             while (state) {
                 keyval=key_scan(1);
                 if(keyval!=KEY1_PRES&&(state==1||state==3)) {
@@ -74,6 +75,7 @@ int main(void)
                     LED0_brightness_control(0);
                 }
             }
+            HAL_UART_Transmit(&g_uart1_handle, (uint8_t*)&state_mem, 1, 1000);
             if (state_mem==2 || state_mem==3) {
                 brightness_level+=1;
                 brightness_level%=4;
@@ -84,21 +86,22 @@ int main(void)
                 uint32_t press_time = key_press_time_cnt(temp_fun, KEY1_PRES);
                 press_time+=1000;
                 uint8_t flag=0;
-                while (!flag) {
-                    HAL_UART_Transmit(&g_uart1_handle, (uint8_t*)&press_time, 4, 1000);
-                    for (uint32_t i = 0; i < press_time; ++i) {
+                while (flag==0) {
+                    for (uint32_t i = 0; i < press_time; i+=10) {
                         if (i<=press_time/2) {
-                            LED0(0);
+                            LED0_brightness_control(240);
                         } else {
-                            LED0(1);
+                            LED0_brightness_control(0);
                         }
                         keyval=key_scan(1);
                         if (keyval==KEY1_PRES) {
                             flag=1;
                         } else if (flag) {
+                            LED0_brightness_control(0);
                             break;
                         }
-                        delay_ms(1);   // 5000ms / 448 rounds =11.161ms
+                        delay_ms(10);   
+                        // HAL_UART_Transmit(&g_uart1_handle, (uint8_t*)&i, 1, 1000);
                     }
                 }
             }
