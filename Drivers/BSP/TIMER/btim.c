@@ -35,8 +35,10 @@
 
 TIM_HandleTypeDef g_timx_handle = {0};  /* 定时器句柄 */
 TIM_HandleTypeDef timx_handle2 = {0};
+TIM_HandleTypeDef timx_handle3 = {0};
 extern uint8_t state;
 uint8_t brt_cnt,brt_cmp;
+uint32_t tim2_cnt;
 
 /**
  * @brief       基本定时器TIMX定时中断初始化函数
@@ -97,6 +99,13 @@ void TIM3_IRQHandler(void)
     HAL_TIM_IRQHandler(&timx_handle2); /* 定时器中断公共处理函数 */
 }
 
+void TIM2_IRQHandler(void)
+{
+    if (tim2_cnt<0xffffffff) {
+        ++tim2_cnt;
+    }
+}
+
 /**
  * @brief       定时器更新中断回调函数
  * @param       htim:定时器句柄
@@ -107,7 +116,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if (htim->Instance == BTIM_TIMX_INT)
     {
         state=0;
-        btim_timx_int_stop();
+        tim1_1s_stop();
     } else if (htim->Instance == TIM3) {
         brt_cnt++;
         if (brt_cnt<brt_cmp) {
@@ -118,12 +127,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 }
 
-void btim_timx_int_stop()
+void tim1_1s_stop()
 {
     HAL_TIM_Base_Stop_IT(&g_timx_handle);
 }
 
-void btim_timx_int_start()
+void tim1_1s_start()
 {
     HAL_TIM_Base_Start_IT(&g_timx_handle);
 }
@@ -159,3 +168,32 @@ uint8_t LED0_brightness_control(uint8_t brightness)
     brt_cmp=brightness;
     return 0;
 }
+
+
+void tim3_init(void)
+{
+    timx_handle3.Instance = TIM2;                      /* 使用 TIM3 作为亮度控制定时器 */
+    timx_handle3.Init.Prescaler = 72-1;                          /* 设置预分频系数 */
+    timx_handle3.Init.CounterMode = TIM_COUNTERMODE_UP;         /* 递增计数模式 */
+    timx_handle3.Init.Period = 1000-1;                             /* 自动装载值 */
+    timx_handle3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    timx_handle3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    HAL_TIM_Base_Init(&timx_handle3);
+}
+
+
+uint32_t key_press_time_cnt(uint8_t (*key_pres_func)(void), uint8_t press_ret)
+{
+    HAL_TIM_Base_Start_IT(&timx_handle3);    /* 使用中断方式启动 TIM2 */
+    while (1) {
+        uint8_t retval = key_pres_func();
+        if (retval!=press_ret) {
+            uint32_t ret = tim2_cnt;
+            HAL_TIM_Base_Stop_IT(&timx_handle3);
+            tim2_cnt=0;
+            return ret;
+        }
+    }
+}
+
+

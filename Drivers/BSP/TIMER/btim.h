@@ -43,10 +43,12 @@
 /******************************************************************************************/
 
 void btim_timx_int_init(uint16_t arr, uint16_t psc);    /* 基本定时器 定时中断初始化函数 */
-void btim_timx_int_stop(void);
-void btim_timx_int_start(void);
+void tim1_1s_stop(void);
+void tim1_1s_start(void);
 void btim_timx_int2_init(uint16_t arr, uint16_t psc);   // 用作类PWM
 uint8_t LED0_brightness_control(uint8_t brightness);
+void tim3_init(void);   // TIM2 1ms for key press time count
+uint32_t key_press_time_cnt(uint8_t (*key_pres_func)(void), uint8_t press_ret);
 
 #endif
 

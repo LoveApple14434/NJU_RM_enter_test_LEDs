@@ -20,6 +20,7 @@
 
 
 
+#include "stm32f1xx.h"
 #include "stm32f1xx_it.h"
 #include "./SYSTEM/sys/sys.h"
 #include "./SYSTEM/delay/delay.h"
@@ -31,6 +32,10 @@
 
 uint8_t state = 0;
 
+void led_breath(void);
+
+uint8_t temp_fun(void) {return key_scan(1);}
+
 int main(void)
 {
     HAL_Init();                                 /* 初始化HAL库 */
@@ -39,24 +44,86 @@ int main(void)
     led_init();                                 /* 配置STM32操作LED相关的寄存器 */
     key_init();
     usart_init(115200);
-    btim_timx_int_init(18000-1, 4000-1);
-    btim_timx_int_stop();
+    btim_timx_int_init(18000-1, 4000-1);    // 72M/(18k*4k)=1Hz
+    tim1_1s_stop();
 
     btim_timx_int2_init(72-1, 10);
     LED0_brightness_control(0);
     
     uint8_t brightness_level = 0;
-    uint8_t brt = 0;
     while(1)
     {
         uint8_t keyval = key_scan(1);
-        HAL_UART_Transmit(&g_uart1_handle, &keyval, 1, 1000);
-        brt+=10;
-        if (brt<=32) {
-            brt=32;
-        }
-        LED0_brightness_control(brt);
+        // HAL_UART_Transmit(&g_uart1_handle, &keyval, 1, 1000);
+        if (keyval==KEY1_PRES) {
+            state=1;
+            tim1_1s_start();
+            uint8_t state_mem = 0;
+            while (state) {
+                keyval=key_scan(1);
+                if(keyval!=KEY1_PRES&&(state==1||state==3)) {
+                    ++state;
+                    state_mem=state;
+                } else if (keyval==KEY1_PRES&&state==2) {
+                    ++state;
+                    state_mem=state;
+                }
+                if (state==4) {
+                    led_breath();
+                    brightness_level=0;
+                    LED0_brightness_control(0);
+                }
+            }
+            if (state_mem==2 || state_mem==3) {
+                brightness_level+=1;
+                brightness_level%=4;
+                LED0_brightness_control(brightness_level*40);
+            }
+            else if (state_mem==1) {
+                // count press time
+                uint32_t press_time = key_press_time_cnt(temp_fun, KEY1_PRES);
+                press_time+=1000;
+                uint8_t flag=0;
+                while (!flag) {
+                    HAL_UART_Transmit(&g_uart1_handle, (uint8_t*)&press_time, 4, 1000);
+                    for (uint32_t i = 0; i < press_time; ++i) {
+                        if (i<=press_time/2) {
+                            LED0(0);
+                        } else {
+                            LED0(1);
+                        }
+                        keyval=key_scan(1);
+                        if (keyval==KEY1_PRES) {
+                            flag=1;
+                        } else if (flag) {
+                            break;
+                        }
+                        delay_ms(1);   // 5000ms / 448 rounds =11.161ms
+                    }
+                }
+            }
+        }   
         delay_ms(50);
     }
 }
 
+void led_breath(){
+    uint8_t keyval = key_scan(1);
+    uint8_t flag = 0;
+    while (1) {
+        for (int i=32; i<512-32; ++i) {
+        if (i<=255) {
+            LED0_brightness_control(i);
+        } else {
+            LED0_brightness_control(511-i);
+        }
+        keyval=key_scan(1);
+        if (keyval==KEY1_PRES) {
+            flag=1;
+        } else if (flag) {
+            return;
+        }
+        delay_ms(11);   // 5000ms / 448 rounds =11.161ms
+        }
+    }
+}
