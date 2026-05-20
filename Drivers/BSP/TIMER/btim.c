@@ -197,10 +197,10 @@ uint32_t key_press_time_cnt(uint8_t (*key_pres_func)(void), uint8_t press_ret)
     HAL_TIM_Base_Start_IT(&timx_handle3);    /* 使用中断方式启动 TIM2 */
     while (1) {
         uint8_t retval = key_pres_func();
-        HAL_UART_Transmit(&g_uart1_handle, &retval, 1, 100);
+        // HAL_UART_Transmit(&g_uart1_handle, &retval, 1, 100);
         if (retval!=press_ret) {
             uint32_t ret = tim2_cnt;
-            HAL_UART_Transmit(&g_uart1_handle, (uint8_t*)&ret, 4, 1000);
+            // HAL_UART_Transmit(&g_uart1_handle, (uint8_t*)&ret, 4, 1000);
             HAL_TIM_Base_Stop_IT(&timx_handle3);
             tim2_cnt=0;
             return ret;
