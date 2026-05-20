@@ -42,28 +42,21 @@ int main(void)
     btim_timx_int_init(18000-1, 4000-1);
     btim_timx_int_stop();
 
-    btim_timx_int2_init(72-1, 0xfff);
-    // LED0_brightness_control(0);
+    btim_timx_int2_init(72-1, 10);
+    LED0_brightness_control(0);
     
     uint8_t brightness_level = 0;
-
+    uint8_t brt = 0;
     while(1)
     {
         uint8_t keyval = key_scan(1);
         HAL_UART_Transmit(&g_uart1_handle, &keyval, 1, 1000);
-        if(keyval==KEY1_PRES) {
-            // state=1;
-            // btim_timx_int_start();
-            // while (state) {
-            //     keyval=key_scan(1);
-            //     if (!keyval) {
-            //         brightness_level=(brightness_level+1)%4;
-            //         LED0_brightness_control(brightness_level*10000);
-            //     }
-            // }
-            LED0(0);
+        brt+=10;
+        if (brt<=32) {
+            brt=32;
         }
-        // HAL_UART_Transmit(&g_uart1_handle, &keyval, 1, 100);
+        LED0_brightness_control(brt);
+        delay_ms(50);
     }
 }
 
